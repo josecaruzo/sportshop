@@ -15,8 +15,8 @@ public class ProductConsumer {
 		this.stockService = customerService;
 	}
 
-	@Bean(name = "removeStock")
-	Consumer<Product> removeStockConsumer(){
-		return stockService::removeStock;
+	@Bean(name = "updateStock")
+	Consumer<Product> updateStockConsumer(){
+		return stockService::updateStock;
 	}
 }

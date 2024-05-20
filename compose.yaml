@@ -1,12 +1,34 @@
 services:
-  postgres:
+  dbcustomer:
     image: postgres:latest
     environment:
       POSTGRES_DB: sportshop
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin
     ports:
-      - "5432:5432"
+      - "5433:5432"
+    networks:
+      - sportshop_network
+
+  dbproduct:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: sportshop
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+    ports:
+      - "5434:5432"
+    networks:
+      - sportshop_network
+
+  dbpurchase:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: sportshop
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+    ports:
+      - "5435:5432"
     networks:
       - sportshop_network
 
@@ -14,7 +36,7 @@ services:
     build:
       context: ./msCustomers
     depends_on:
-      - postgres
+      - dbcustomer
     ports:
       - "8081:8081"
     networks:
@@ -24,7 +46,7 @@ services:
     build:
       context: ./msStock
     depends_on:
-      - postgres
+      - dbproduct
     ports:
       - "8082:8082"
     networks:
@@ -34,7 +56,7 @@ services:
     build:
       context: ./msSales
     depends_on:
-      - postgres
+      - dbpurchase
     ports:
       - "8083:8083"
     networks:
@@ -44,7 +66,7 @@ services:
     build:
       context: ./msLogistic
     depends_on:
-      - postgres
+      - dbpurchase
     ports:
       - "8084:8084"
     networks:
@@ -54,7 +76,7 @@ services:
     build:
       context: ./msBatches
     depends_on:
-      - postgres
+      - dbproduct
     ports:
       - "8085:8085"
     networks:

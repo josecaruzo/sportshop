@@ -46,10 +46,10 @@ class ProductRepositoryIntegTest {
 		Product createdProduct2 = productRepository.save(product2);
 		List<Product> productList = List.of(createdProduct1, createdProduct2);
 
-		List<Product> findProduct = productRepository.findByNameContainingIgnoreCaseOrderById(name);
+		List<Product> findProduct = productRepository.findByNameContainingIgnoreCase(name);
 
 		//Assert
-		assertThat(findProduct).isNotEmpty().isEqualTo(productList);
+		assertThat(findProduct).isNotEmpty().hasSize(productList.size());
 	}
 
 	@Test

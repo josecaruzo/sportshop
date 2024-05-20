@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
 import java.util.function.Consumer;
+
 @Component
 public class PurchaseHistoryConsumer {
 	private final LogisticService logisticService;
@@ -16,6 +17,6 @@ public class PurchaseHistoryConsumer {
 
 	@Bean(name = "saveHistory")
 	Consumer<PurchaseHistory> saveHistoryConsumer(){
-			return logisticService::createPurchaseHistory;
-		}
+		return logisticService::createPurchaseHistory;
+	}
 }

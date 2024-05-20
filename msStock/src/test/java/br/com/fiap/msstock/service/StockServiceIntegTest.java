@@ -202,12 +202,16 @@ public class StockServiceIntegTest {
 			Product product = ProductUtils.createFakeProduct("Dummy test name 13");
 
 			//Act
-			Product savedProduct = stockService.createProduct(product);
-			stockService.removeStock(savedProduct);
-			savedProduct = stockService.getProductById(savedProduct.getId());
+			stockService.createProduct(product);
+			Product updateProduct = new Product();
+			updateProduct.setId(product.getId());
+			updateProduct.setQuantity(-1 * product.getQuantity());
+
+			stockService.updateStock(updateProduct);
+			product = stockService.getProductById(updateProduct.getId());
 
 			//Assert
-			assertThat(savedProduct.getQuantity()).isZero();
+			assertThat(product.getQuantity()).isZero();
 		}
 
 		@Test
@@ -216,7 +220,7 @@ public class StockServiceIntegTest {
 			Product product = ProductUtils.createFakeProduct(1000014L, "Dummy test name 14");
 
 			//Act && Assert
-			assertThatThrownBy(() -> stockService.removeStock(product))
+			assertThatThrownBy(() -> stockService.updateStock(product))
 					.isInstanceOf(EntityNotFoundException.class)
 					.hasMessage(StockService.ENTITY_NOT_FOUND);
 		}

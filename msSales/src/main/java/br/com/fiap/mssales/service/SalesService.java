@@ -90,22 +90,37 @@ public class SalesService {
 		if(!purchaseToUpdate.getStatus().equals(WAITING_PAYMENT_STATUS)){
 			throw new DataIntegrityViolationException(
 					String.format(STATUS_NOT_VALID, purchaseToUpdate.getStatus(), status)
-			) ;
+			);
 		}
 
 		purchaseToUpdate.setStatus(status);
 		Purchase savedPurchase = this.purchaseRepository.save(purchaseToUpdate);
 		saveHistory(savedPurchase); //Save history
 
+		if (status.equals(CANCELED_STATUS)) {
+			addProductsFromStock(savedPurchase); //Add product to stock
+		}
+
 		return savedPurchase;
 	}
 
-	private void removeProductsFromStock(Purchase savedPurchase) {
-		for (PurchaseItem item : savedPurchase.getItems()) {
+	private void removeProductsFromStock(Purchase purchase) {
+		for (PurchaseItem item : purchase.getItems()) {
+			Product product = new Product();
+			product.setId(item.getProductId());
+			product.setQuantity(-1 * item.getQuantity());
+
+			productFunction.updateStock(product);
+		}
+	}
+
+	private void addProductsFromStock(Purchase purchase) {
+		for (PurchaseItem item : purchase.getItems()) {
 			Product product = new Product();
 			product.setId(item.getProductId());
 			product.setQuantity(item.getQuantity());
-			productFunction.removeStock(product);
+
+			productFunction.updateStock(product);
 		}
 	}
 

@@ -53,14 +53,14 @@ class ProductRepositoryUnitTest {
 		Product product2 = ProductUtils.createFakeProduct(2L, name + " 2");
 		List<Product> productList = List.of(product1, product2);
 
-		when(productRepository.findByNameContainingIgnoreCaseOrderById(any(String.class))).thenReturn(productList);
+		when(productRepository.findByNameContainingIgnoreCase(any(String.class))).thenReturn(productList);
 
 		//Act
-		List<Product> findProduct = productRepository.findByNameContainingIgnoreCaseOrderById(name);
+		List<Product> findProduct = productRepository.findByNameContainingIgnoreCase(name);
 
 		//Assert
 		assertThat(findProduct).isNotEmpty().isEqualTo(productList);
-		verify(productRepository, times(1)).findByNameContainingIgnoreCaseOrderById(any(String.class));
+		verify(productRepository, times(1)).findByNameContainingIgnoreCase(any(String.class));
 	}
 
 	@Test

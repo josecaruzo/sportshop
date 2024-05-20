@@ -78,14 +78,14 @@ public class StockServiceUnitTest {
 			Product product2 = ProductUtils.createFakeProduct(2L, name + " 2");
 			List<Product> productList = List.of(product1, product2);
 
-			when(productRepository.findByNameContainingIgnoreCaseOrderById(any(String.class))).thenReturn(productList);
+			when(productRepository.findByNameContainingIgnoreCase(any(String.class))).thenReturn(productList);
 
 			//Act
 			List<Product> products = stockService.getProductsByName(name);
 
 			//Assert
 			assertThat(products).isNotNull().isEqualTo(productList);
-			verify(productRepository, times(1)).findByNameContainingIgnoreCaseOrderById(any(String.class));
+			verify(productRepository, times(1)).findByNameContainingIgnoreCase(any(String.class));
 		}
 	}
 
@@ -235,7 +235,7 @@ public class StockServiceUnitTest {
 			when(productRepository.save(any(Product.class))).thenAnswer(p -> p.getArgument(0));
 
 			//Act
-			stockService.removeStock(product);
+			stockService.updateStock(product);
 
 			//Assert
 			verify(productRepository, times(1)).findById(any(Long.class));
@@ -249,7 +249,7 @@ public class StockServiceUnitTest {
 			when(productRepository.findById(any(Long.class))).thenReturn(Optional.empty());
 
 			//Act && Assert
-			assertThatThrownBy(() -> stockService.removeStock(product))
+			assertThatThrownBy(() -> stockService.updateStock(product))
 					.isInstanceOf(EntityNotFoundException.class)
 					.hasMessageContaining(StockService.ENTITY_NOT_FOUND);
 			verify(productRepository, times(1)).findById(any(Long.class));

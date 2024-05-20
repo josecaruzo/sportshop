@@ -24,7 +24,7 @@ class PurchaseHistoryRepositoryIntegTest {
 	@Test
 	void allowFindByPurchaseId(){
 		//Arrange
-		Long purchaseId = 1L;
+		Long purchaseId = 100000L;
 		PurchaseHistory ph1 = PurchaseHistoryUtils.createFakePurchaseHistory(purchaseId, "AGUARDANDO PAGAMENTO");
 		PurchaseHistory ph2 = PurchaseHistoryUtils.createFakePurchaseHistory(purchaseId, "PAGO");
 

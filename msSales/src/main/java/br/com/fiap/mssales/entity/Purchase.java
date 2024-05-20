@@ -27,7 +27,7 @@ public class Purchase {
 	@Column(length = 9) // 00000-000
 	private String deliveryZipCode;
 
-	@Column(length = 200)
+	@Column
 	private String deliveryAddress;
 
 	@Column(length = 17) // YYYYMMDDHHMMSSsss

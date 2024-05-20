@@ -27,7 +27,7 @@ public class StockService {
 	}
 
 	public List<Product> getProductsByName(String name) {
-		return this.productRepository.findByNameContainingIgnoreCaseOrderById(name);
+		return this.productRepository.findByNameContainingIgnoreCase(name);
 	}
 
 	public Product createProduct(Product product) {
@@ -64,12 +64,12 @@ public class StockService {
 		return String.format(PRODUCT_DELETED, productToDelete.getName());
 	}
 
-	public void removeStock(Product product) {
+	public void updateStock(Product product) {
 			Product productToUpdate = this.productRepository.findById(product.getId())
 					.orElseThrow(() -> new EntityNotFoundException(ENTITY_NOT_FOUND));
 
 			//The stock was validated before in the consumer
-			productToUpdate.setQuantity(productToUpdate.getQuantity() - product.getQuantity());
+			productToUpdate.setQuantity(productToUpdate.getQuantity() + product.getQuantity());
 			this.productRepository.save(productToUpdate);
 	}
 
