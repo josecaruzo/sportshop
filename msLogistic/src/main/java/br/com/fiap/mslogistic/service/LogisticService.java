@@ -45,6 +45,8 @@ public class LogisticService {
 	public List<Purchase> dispatchPurchases() {
 		List<Purchase> purchases = purchaseRepository.findByStatusOrderByDeliveryZipCode(PAID_STATUS);
 
+		if (purchases.isEmpty()) return purchases;
+
 		String deliveryGroupId = createNewDeliveryGroup();
 		String groupId = purchases.get(0).getDeliveryZipCode().substring(0, 4);
 
