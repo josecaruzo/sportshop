@@ -5,12 +5,10 @@ import br.com.fiap.mssales.functions.CustomerFunction;
 import br.com.fiap.mssales.functions.ProductFunction;
 import br.com.fiap.mssales.functions.PurchaseHistoryFunction;
 import br.com.fiap.mssales.repository.PurchaseRepository;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import feign.FeignException;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -23,7 +21,6 @@ public class SalesService {
 	public static final String PURCHASE_NOT_FOUND = "Pedido não encontrado"; //Purchase not found
 	public static final String CUSTOMER_NOT_FOUND = "Cliente não encontrado"; //Customer not found
 	public static final String PRODUCT_NOT_FOUND = "Item %s não encontrado"; //Product not found
-	public static final String JSON_ERROR = "Erro ao processar JSON"; //Error processing JSON
 	public static final String PRODUCT_DOESNT_HAVE_ENOUGH_STOCK = "Estoque insuficiente para o produto %s"; //Insufficient stock
 	public static final String STATUS_NOT_VALID = "Não foi possível mudar o pedido do status %s para o status %s"; //Cannot change to this new status based on last status
 
@@ -35,22 +32,16 @@ public class SalesService {
 	private final CustomerFunction customerFunction;
 	private final ProductFunction productFunction;
 	private final PurchaseHistoryFunction purchaseHistoryFunction;
-	private final RestTemplate restTemplate;
-	private final ObjectMapper objectMapper;
 
 	public SalesService(
 			PurchaseRepository purchaseRepository,
 			CustomerFunction customerFunction,
 			ProductFunction productFunction,
-			PurchaseHistoryFunction purchaseHistoryFunction,
-			RestTemplate restTemplate,
-			ObjectMapper objectMapper) {
+			PurchaseHistoryFunction purchaseHistoryFunction) {
 		this.purchaseRepository = purchaseRepository;
 		this.customerFunction = customerFunction;
 		this.productFunction = productFunction;
 		this.purchaseHistoryFunction = purchaseHistoryFunction;
-		this.restTemplate = restTemplate;
-		this.objectMapper = objectMapper;
 	}
 
 	public Purchase getPurchaseById(Long id) {
@@ -129,25 +120,13 @@ public class SalesService {
 
 		for(PurchaseItem item : purchase.getItems()) {
 			try {
-				ResponseEntity<String> response = restTemplate.getForEntity(
-						"http://msstock:8082/stock/getProductById/{id}",
-						String.class,
-						item.getProductId()
-				);
-
-				try {
-					JsonNode jsonProduct = objectMapper.readTree(response.getBody());
-					int quantity = jsonProduct.get("quantity").asInt();
-					float price = jsonProduct.get("price").floatValue();
-
-					if (quantity < item.getQuantity()) {
-						throw new DataIntegrityViolationException(String.format(PRODUCT_DOESNT_HAVE_ENOUGH_STOCK, item.getProductId()));
-					}
-					totalValue += price * item.getQuantity();
-				} catch (JsonProcessingException e) {
-					throw new DataIntegrityViolationException(JSON_ERROR);
+				Product product = productFunction.findProduct(item.getProductId());
+				if (product.getQuantity() < item.getQuantity()) {
+					throw new DataIntegrityViolationException(String.format(PRODUCT_DOESNT_HAVE_ENOUGH_STOCK, item.getProductId()));
 				}
-			}catch (HttpClientErrorException e){
+				totalValue += product.getPrice() * item.getQuantity();
+
+			}catch (FeignException.NotFound e){
 				throw new EntityNotFoundException(String.format(PRODUCT_NOT_FOUND, item.getProductId()));
 			}
 		}
@@ -161,7 +140,7 @@ public class SalesService {
 			purchase.setDeliveryZipCode(customer.getZipCode());
 			purchase.setDeliveryAddress(customer.getAddress() + ", " + customer.getCity() + " - " + customer.getState() + ", " + customer.getCountry()); //Get the complete address
 		}
-		catch (Exception e){
+		catch (FeignException.NotFound e){
 			throw new EntityNotFoundException(CUSTOMER_NOT_FOUND);
 		}
 	}

@@ -41,11 +41,6 @@ public class SalesServiceUnitTest {
 	@Mock
 	private PurchaseHistoryFunction purchaseHistoryFunction;
 
-	@Mock
-	private RestTemplate restTemplate;
-
-	private ObjectMapper objectMapper;
-
 	AutoCloseable openMocks;
 
 	@BeforeEach
@@ -55,9 +50,7 @@ public class SalesServiceUnitTest {
 				purchaseRepository,
 				customerFunction,
 				productFunction,
-				purchaseHistoryFunction,
-				restTemplate,
-				objectMapper
+				purchaseHistoryFunction
 		);
 	}
 
@@ -118,8 +111,8 @@ public class SalesServiceUnitTest {
 
 	@Nested
 	class CreatePurchase{
-		/*@Test
-		void allowCreatePurchase() throws Exception {
+		@Test
+		void allowCreatePurchase() {
 			//Arrange
 			Customer customer = PurchaseUtils.createFakeCustomer();
 			Product product = PurchaseUtils.createFakeProduct();
@@ -131,16 +124,12 @@ public class SalesServiceUnitTest {
 			purchase.setCustomerCpf(customer.getCpf());
 			purchase.setItems(List.of(purchaseItem));
 
-			ResponseEntity<Product> responseEntity = new ResponseEntity<>(product, HttpStatus.OK);
 
 			when(purchaseRepository.save(any(Purchase.class))).thenAnswer(p -> p.getArgument(0));
-			when(customerFunction.findCustomer(any(String.class))).thenReturn(PurchaseUtils.createFakeCustomer());
-			//when(restTemplate.getForEntity(any(String.class), String.class))
-			//		.thenReturn(new ResponseEntity<>(PurchaseUtils.asJsonString(product), HttpStatus.OK));
-
+			when(customerFunction.findCustomer(any(String.class))).thenReturn(customer);
+			when(productFunction.findProduct(purchaseItem.getProductId())).thenReturn(product);
 			doNothing().when(purchaseHistoryFunction).saveHistory(any(PurchaseHistory.class));
-			doNothing().when(productFunction).removeStock(any(Product.class));
-
+			doNothing().when(productFunction).updateStock(any(Product.class));
 
 			//Act
 			Purchase savedPurchase = salesService.createPurchase(purchase);
@@ -154,7 +143,7 @@ public class SalesServiceUnitTest {
 		void shouldThrowEntityNotFoundException_WhenCreatePurchase_Customer(){
 			//Arrange
 			Purchase purchase = PurchaseUtils.createFakePurchase(1L);
-			when(customerFunction.findCustomer(any(String.class))).thenReturn(null);
+			when(customerFunction.findCustomer(any(String.class))).thenThrow(EntityNotFoundException.class);
 
 			//Act && Assert
 			assertThatExceptionOfType(EntityNotFoundException.class)
@@ -163,30 +152,41 @@ public class SalesServiceUnitTest {
 		}
 
 		@Test
-		void shouldThrowEntityNotFoundException_WhenCreatePurchase_Product() throws Exception {
+		void shouldThrowEntityNotFoundException_WhenCreatePurchase_Product() {
+			//Arrange
+			Customer customer = PurchaseUtils.createFakeCustomer();
+			Purchase purchase = PurchaseUtils.createFakePurchase(1L);
+			purchase.setCustomerCpf(customer.getCpf());
+			when(customerFunction.findCustomer(any(String.class))).thenReturn(customer);
+			when(productFunction.findProduct(any(Long.class))).thenThrow (EntityNotFoundException.class);
+
+			//Act && Assert
+			assertThatExceptionOfType(EntityNotFoundException.class)
+					.isThrownBy(() -> salesService.createPurchase(purchase));
+			verify(purchaseRepository, never()).save(any(Purchase.class));
+		}
+
+		@Test
+		void shouldThrowDataIntegrityViolationException_WhenCreatePurchase() {
 			//Arrange
 			Customer customer = PurchaseUtils.createFakeCustomer();
 			Product product = PurchaseUtils.createFakeProduct();
 			PurchaseItem purchaseItem = new PurchaseItem();
 			purchaseItem.setId(product.getId());
-			purchaseItem.setQuantity(1);
+			purchaseItem.setQuantity(1000000);
 
 			Purchase purchase = PurchaseUtils.createFakePurchase(1L);
 			purchase.setCustomerCpf(customer.getCpf());
 			purchase.setItems(List.of(purchaseItem));
 
-			when(customerFunction.findCustomer(any(String.class))).thenReturn(PurchaseUtils.createFakeCustomer());
-			when(restTemplate.getForEntity(
-					"http://localhost:8082/stock/getProductById/{id}",
-					String.class,
-					product.getId())).thenReturn(ResponseEntity.notFound().build());
+			when(customerFunction.findCustomer(any(String.class))).thenReturn(customer);
+			when(productFunction.findProduct(purchaseItem.getProductId())).thenReturn(product);
 
 			//Act && Assert
-			assertThatExceptionOfType(HttpClientErrorException.class)
-				.isThrownBy(() -> salesService.createPurchase(purchase));
+			assertThatExceptionOfType(DataIntegrityViolationException.class)
+					.isThrownBy(() -> salesService.createPurchase(purchase));
 			verify(purchaseRepository, never()).save(any(Purchase.class));
-
-		}*/
+		}
 	}
 
 	@Nested
